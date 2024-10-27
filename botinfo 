@@ -1,0 +1,30 @@
+Botinfo
+const { EmbedBuilder } = require('discord.js');
+const moment = require('moment');
+module.exports = {
+name: 'botinfo',
+description: 'Exibe informações detalhadas sobre o bot.',
+async execute(interaction) {
+const uptime = moment.duration(interaction.client.uptime).humanize();
+const totalServers = interaction.client.guilds.cache.size;
+const randomColor = Math.floor(Math.random() * 16777215).toString(16);
+
+    const botInfoEmbed = new EmbedBuilder()
+        .setColor(`#${randomColor}`)
+
+        .setTitle('Bot information')
+        .setThumbnail(interaction.client.user.displayAvatarURL())
+        .addFields(
+            { name: '<:coroa:1297248467130908722> » Criador', value: 'Milleniuu1', inline: false },
+            { name: '<:js:1297350216130887681> » Linguagem', value: 'JavaScript & Node.js', inline: false },
+            { name: '<a:eng:1297209181123907664> » Versão', value: '1.0.0', inline: false },
+            { name: '<a:ping:1297350031786901545> » Ping', value: `${interaction.client.ws.ping} ms`, inline: false },
+            { name: '<a:relogio:1297283446233759876> » Criado em', value: `<t:${Math.floor(interaction.client.user.createdTimestamp / 1000)}:F>`, inline: false },
+            { name: '<a:blobcookie:1297280728941203526> » Servidores', value: `${totalServers}`, inline: false },
+            { name: '⏳ » Uptime', value: `${uptime}`, inline: false },
+            { name: '📡 » Host', value: 'Uptime', inline: false }
+        )
+        .setFooter({ text: 'Copyright © 2022 milleniuu1. All Rights Reserved.' });
+
+    await interaction.reply({ embeds: [botInfoEmbed] });
+},
