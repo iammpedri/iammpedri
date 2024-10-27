@@ -1,0 +1,33 @@
+const { EmbedBuilder } = require('discord.js');
+
+module.exports = {
+    name: 'perfil',
+    description: 'Exibe informações do perfil do usuário ou do mencionado, com cor de embed aleatória',
+    async execute(message) {
+        const member = message.mentions.members.first() || message.member;
+        const user = message.mentions.users.first() || message.author;
+
+        function getRandomColor() {
+            return '#' + Math.floor(Math.random() * 16777215).toString(16);
+        }
+
+        const roles = member.roles.cache
+            .filter(role => role.id !== message.guild.id)
+            .map(role => `<@&${role.id}>`)
+            .join(', ') || 'Nenhum cargo';
+
+        const perfilEmbed = new EmbedBuilder()
+            .setColor(getRandomColor())
+            .setTitle(`Perfil de ${user.username}`)
+            .setThumbnail(user.displayAvatarURL({ dynamic: true }))
+            .addFields(
+                { name: `<:userr:1297205118281715732> Nome de usuário:`, value: `${user.tag}`, inline: true },
+                { name: `<a:eng:1297209181123907664> ID:`, value: `${user.id}`, inline: true },
+                { name: `<a:pepeenter:1297199987230380105> Entrada no servidor:`, value: `${member.joinedAt.toDateString()}`, inline: true },
+                { name: `<a:teclatecla:1297203590540296304> Conta criada em:`, value: `${user.createdAt.toDateString()}`, inline: true },
+                { name: `<:staff:1297200313937170515> Cargo(s):`, value: roles, inline: true }
+            )
+            .setFooter({ text: 'Informações do perfil', iconURL: user.displayAvatarURL() })
+            .setTimestamp();
+        message.channel.send({ embeds: [perfilEmbed] });
+    }
