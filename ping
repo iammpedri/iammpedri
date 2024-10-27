@@ -1,0 +1,9 @@
+module.exports = {
+    name: 'ping',
+    description: 'Responde com o ping do bot',
+    async execute(message) {
+        const sentMessage = await message.channel.send('Calculando ping...');
+        const ping = sentMessage.createdTimestamp - message.createdTimestamp;
+        sentMessage.edit(`<a:conect:1297244405916242023> Pong! Latência: ${ping}ms. Latência da API: ${Math.round(message.client.ws.ping)}ms`);
+    }
+};
