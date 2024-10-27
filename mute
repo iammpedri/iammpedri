@@ -1,0 +1,99 @@
+const { EmbedBuilder } = require('discord.js');
+
+module.exports = {
+  name: 'mute',
+  description: 'Muta um usuário por violação de regras.',
+  execute: async function (message) {
+    if (!message.member.permissions.has('MUTE_MEMBERS')) {
+      await message.reply('Você não tem permissão para mutar usuários.').then(msg => setTimeout(() => msg.delete(), 300000));
+      return;
+    }
+
+    const member = message.mentions.members.first();
+    const channelMention = message.mentions.channels.first();
+
+    if (!member || !channelMention) {
+      await message.reply('Você precisa mencionar um usuário e um canal para mutar.').then(msg => setTimeout(() => msg.delete(), 300000));
+      return;
+    }
+
+    const filter = (response) => response.author.id === message.author.id;
+
+    // Pergunta o motivo do mute
+    await message.reply('Por favor, informe o motivo do mute.').then(msg => setTimeout(() => msg.delete(), 300000));
+
+    const motivoCollector = message.channel.createMessageCollector({ filter, max: 1, time: 30000 });
+
+    motivoCollector.on('collect', async (motivoMessage) => {
+      const motivo = motivoMessage.content || 'Motivo não especificado';
+      await motivoMessage.delete();
+
+      // Pergunta a duração do mute
+      await message.reply('Por favor, informe a duração do mute em minutos, horas ou dias (ex: "30m", "2h", "1d").').then(msg => setTimeout(() => msg.delete(), 300000));
+
+      const tempoCollector = message.channel.createMessageCollector({ filter, max: 1, time: 30000 });
+
+      tempoCollector.on('collect', async (tempoMessage) => {
+        const tempoInput = tempoMessage.content;
+        await tempoMessage.delete();
+
+        let tempo = 0;
+        let tempoTexto = '';
+        
+        if (tempoInput.endsWith('m')) {
+          tempo = parseInt(tempoInput.replace('m', '')) * 60 * 1000; // Minutos para milissegundos
+          tempoTexto = tempoInput.replace('m', ' minutos');
+        } else if (tempoInput.endsWith('h')) {
+          tempo = parseInt(tempoInput.replace('h', '')) * 60 * 60 * 1000; // Horas para milissegundos
+          tempoTexto = tempoInput.replace('h', ' horas');
+        } else if (tempoInput.endsWith('d')) {
+          tempo = parseInt(tempoInput.replace('d', '')) * 24 * 60 * 60 * 1000; // Dias para milissegundos
+          tempoTexto = tempoInput.replace('d', ' dias');
+        } else {
+          await message.reply('Formato inválido. Use "m" para minutos, "h" para horas ou "d" para dias.').then(msg => setTimeout(() => msg.delete(), 300000));
+          return;
+        }
+
+        const nickname = member.nickname || member.user.username;
+        const userId = member.id;
+        const avatarUrl = member.user.displayAvatarURL({ dynamic: true });
+
+        const embed = new EmbedBuilder()
+          .setColor('#FFA500') // Cor laranja para mute
+          .setTitle('Usuário Mutado')
+          .setDescription(`<a:blobban:1297280754304421969> • Você foi mutado por violar as Diretrizes e Termos de Conduta do Discord.`)
+          .setThumbnail(avatarUrl)
+          .addFields(
+            { name: '<:userr:1297205118281715732> • Usuário', value: `${nickname}`, inline: true },
+            { name: '👮 • ID do Usuário', value: `${userId}`, inline: true },
+            { name: '<a:blobpolice:1297280706677837824> • Mutado por', value: `${message.author.tag}`, inline: true },
+            { name: '📃 • Motivo', value: motivo, inline: false },
+            { name: '<a:relogio:1297283446233759876> • Duração', value: tempoTexto, inline: false }
+          )
+          .setFooter({ text: 'Sistema de Moderação Automática' })
+          .setTimestamp();
+
+        try {
+          // Mutar o usuário
+          await member.timeout(tempo, motivo);
+          await channelMention.send({ embeds: [embed] });
+          await message.reply(`${member} foi mutado com sucesso por ${tempoTexto}!`).then(msg => setTimeout(() => msg.delete(), 300000));
+          await message.delete(); // Deleta a mensagem original
+        } catch (err) {
+          await message.reply('Ocorreu um erro ao tentar mutar o usuário.').then(msg => setTimeout(() => msg.delete(), 300000));
+        }
+      });
+
+      tempoCollector.on('end', (collected, reason) => {
+        if (reason === 'time') {
+          message.reply('Tempo esgotado para fornecer a duração.').then(msg => setTimeout(() => msg.delete(), 300000));
+        }
+      });
+    });
+
+    motivoCollector.on('end', (collected, reason) => {
+      if (reason === 'time') {
+        message.reply('Tempo esgotado para fornecer o motivo.').then(msg => setTimeout(() => msg.delete(), 300000));
+      }
+    });
+  }
