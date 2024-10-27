@@ -1,0 +1,33 @@
+const { EmbedBuilder } = require('discord.js');
+
+module.exports = {
+  name: 'serverinfo',
+  description: 'Exibe informações do servidor',
+  
+  async execute(message, args) {
+    const servidor = message.guild;
+    const donoDoServidor = await servidor.fetchOwner();
+
+    const embed = new EmbedBuilder()
+      .setTitle(`Informações do Servidor`)
+      .setColor('#0099ff')
+      .setThumbnail(servidor.iconURL())
+      .addFields(
+        { name: '📃 Nome do Servidor', value: servidor.name },
+        { name: 'ID do Servidor', value: servidor.id },
+        { name: '<:coroa:1297248467130908722> Dono do Servidor', value: donoDoServidor.user.tag },
+        
+        { name: '<:dataa:1297249010293145681> Data de Criação', value: servidor.createdAt.toLocaleString() },
+        { name: '<:canal:1297248446796922891> Canais', value: `${servidor.channels.cache.size}` },
+        { name: '<:chat:1297248492783271966>Texto', value: `${servidor.channels.cache.filter(channel => channel.type === 0).size}` },  
+        { name: '<:voz:1297248515352690760>Voz', value: `${servidor.channels.cache.filter(channel => channel.type === 2).size}` },    
+        { name: '<:membro:1297249027670282240> Membros', value: `${servidor.memberCount}` }
+      );
+
+    
+    if (servidor.bannerURL()) {
+      embed.setImage(servidor.bannerURL({ dynamic: true }));
+    }
+
+    message.channel.send({ embeds: [embed] });
+  }
